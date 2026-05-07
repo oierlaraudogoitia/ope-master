@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { MoreHorizontal, X } from 'lucide-react';
+import WeekendChallengePopup from './WeekendChallengePopup';
 
 const MENU = [
   { to: '/plan', label: 'Plan' },
@@ -8,8 +9,17 @@ const MENU = [
   { to: '/bloques', label: 'Bloques' },
 ];
 
+const CHALLENGE_END = '2026-05-11';
+
+function isChallengeActive(): boolean {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return today < CHALLENGE_END;
+}
+
 export default function Layout() {
   const [open, setOpen] = useState(false);
+  const [challengeOpen, setChallengeOpen] = useState(isChallengeActive());
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isHome = pathname === '/';
@@ -67,6 +77,10 @@ export default function Layout() {
             </nav>
           </div>
         </div>
+      )}
+
+      {challengeOpen && (
+        <WeekendChallengePopup onClose={() => setChallengeOpen(false)} />
       )}
     </div>
   );

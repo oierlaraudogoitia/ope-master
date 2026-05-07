@@ -6,9 +6,10 @@ import { useProgress } from '../hooks/useProgress';
 import type { Question } from '../types/types';
 import { dueForReview } from '../lib/spacedRepetition';
 
-type Mode = 'todo' | 'falladas' | 'pendientes';
+type Mode = 'todo' | 'falladas' | 'pendientes' | 'reto';
 
 const SESSION_SIZE = 20;
+const RETO_SIZE = 50;
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -20,6 +21,10 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function pickQuestions(mode: Mode, blockId: number | null, progressMap: Record<number, { seen: number; lastCorrect: boolean; nextReview: string }>): Question[] {
+  if (mode === 'reto') {
+    const pool = QUESTIONS.filter((q) => q.source === 'comun');
+    return shuffle(pool).slice(0, RETO_SIZE);
+  }
   let pool: Question[];
   if (mode === 'falladas') {
     pool = QUESTIONS.filter((q) => {
