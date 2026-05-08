@@ -10449,13 +10449,13 @@
       "question": "Selección de inversiones. La TIR es",
       "options": [
         "La tasa que maximiza el VAN.",
-        "La tasa de descuento que hace VAN",
-        "0.",
-        "El coste medio ponderado del capital. (e) El tipo de interés sin riesgo actualizado."
+        "La tasa de descuento que hace VAN = 0.",
+        "El coste medio ponderado del capital.",
+        "El tipo de interés sin riesgo actualizado."
       ],
       "correctIndex": 1,
       "impugnable": false,
-      "explanation": "Correcta la (b): «La tasa de descuento que hace VAN». Punto clave del —; las otras opciones contienen variaciones que no encajan con la literalidad de la norma.",
+      "explanation": "Correcta la (b): «La tasa de descuento que hace VAN = 0.». Definición canónica de la TIR (Tasa Interna de Retorno) en selección de inversiones.",
       "mnemonic": null,
       "difficulty": "easy"
     },
@@ -10581,14 +10581,14 @@
       "sourceNum": 346,
       "question": "Riesgo y valoración de empresas. Relación entre rentabilidad financiera (RF) y económica (RE) con endeudamiento L = D/K y coste de deuda ki",
       "options": [
-        "RF",
-        "RE - (RE - ki)ůL.",
-        "RF",
-        "RE + (RE - ki)ůL."
+        "RF = RE - (RE - ki)·L.",
+        "RF = RE + (RE - ki)·L.",
+        "RF = RE · (1 - L).",
+        "RF = ki + L/RE."
       ],
       "correctIndex": 1,
       "impugnable": false,
-      "explanation": "Correcta la (b): «RE - (RE - ki)ůL.». Punto clave del —; las otras opciones contienen variaciones que no encajan con la literalidad de la norma.",
+      "explanation": "Correcta la (b): «RF = RE + (RE - ki)·L.». Es la fórmula canónica del apalancamiento financiero: la rentabilidad financiera (RF) es igual a la económica (RE) más el efecto del endeudamiento (L) sobre el diferencial entre rentabilidad económica y coste de la deuda (ki).",
       "mnemonic": null,
       "difficulty": "medium"
     },

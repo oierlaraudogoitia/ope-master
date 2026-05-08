@@ -107,7 +107,49 @@ def parse_bbox(path: Path) -> list[Item]:
                 continue
             items.append(Item(pi, y, x, text))
     items.sort(key=lambda it: (it.p, it.y, it.x))
+    items = _reassemble_split_markers(items)
     return items
+
+
+def _reassemble_split_markers(items: list[Item]) -> list[Item]:
+    """Pair head fragments like '(Cor-' with their tail fragment 'recta)' (and similar
+    for (Inco-)/(rrecta), (In-)/(correcta), (Incor-)/(recta), (Co-)/(rrecta)).
+    The merged item keeps the head's position so it stays Y-aligned with the option.
+    """
+    pairs = [
+        # head_text (exact strip), tail_text (exact strip), merged_text
+        ("(Cor-",    "recta)",     "(Correcta)"),
+        ("(Co-",     "rrecta)",    "(Correcta)"),
+        ("(Inco-",   "rrecta)",    "(Incorrecta)"),
+        ("(Incor-",  "recta)",     "(Incorrecta)"),
+        ("(In-",     "correcta)",  "(Incorrecta)"),
+    ]
+    consumed: set[int] = set()
+    for head_text, tail_text, merged in pairs:
+        head_idx = [i for i, it in enumerate(items)
+                    if i not in consumed and it.t.strip() == head_text]
+        tail_idx = [i for i, it in enumerate(items)
+                    if i not in consumed and it.t.strip() == tail_text]
+        # Greedy pair: each head with the closest tail (same page or +-1, by combined distance)
+        for hi in head_idx:
+            best_ti = None
+            best_dist = None
+            for ti in tail_idx:
+                if ti in consumed:
+                    continue
+                pdiff = abs(items[ti].p - items[hi].p)
+                if pdiff > 1:
+                    continue
+                ydiff = abs(items[ti].y - items[hi].y)
+                # Prefer tails on a SLIGHTLY LATER y (or same page, small page-up tolerance)
+                dist = pdiff * 1000 + ydiff
+                if best_dist is None or dist < best_dist:
+                    best_dist = dist
+                    best_ti = ti
+            if best_ti is not None:
+                items[hi] = Item(items[hi].p, items[hi].y, items[hi].x, merged)
+                consumed.add(best_ti)
+    return [it for i, it in enumerate(items) if i not in consumed]
 
 
 # -------------------- per-question resolution --------------------
