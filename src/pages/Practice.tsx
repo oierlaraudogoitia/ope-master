@@ -6,7 +6,7 @@ import { useProgress } from '../hooks/useProgress';
 import type { Question } from '../types/types';
 import { dueForReview } from '../lib/spacedRepetition';
 
-type Mode = 'todo' | 'falladas' | 'pendientes' | 'reto';
+type Mode = 'todo' | 'falladas' | 'pendientes' | 'reto' | 'rango';
 
 const SESSION_SIZE = 20;
 const RETO_SIZE = 50;
@@ -20,7 +20,16 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function pickQuestions(mode: Mode, blockId: number | null, progressMap: Record<number, { seen: number; lastCorrect: boolean; nextReview: string }>): Question[] {
+function pickQuestions(
+  mode: Mode,
+  blockId: number | null,
+  progressMap: Record<number, { seen: number; lastCorrect: boolean; nextReview: string }>,
+  rango?: { hasta: number; n: number },
+): Question[] {
+  if (mode === 'rango' && rango) {
+    const pool = QUESTIONS.filter((q) => q.id <= rango.hasta);
+    return shuffle(pool).slice(0, rango.n);
+  }
   if (mode === 'reto') {
     const pool = QUESTIONS.filter((q) => q.source === 'comun');
     return shuffle(pool).slice(0, RETO_SIZE);
@@ -48,6 +57,13 @@ export default function Practice() {
   const [params, setParams] = useSearchParams();
   const initialMode = (params.get('modo') as Mode) || 'todo';
   const initialBlock = params.get('bloque') ? Number(params.get('bloque')) : null;
+  const rango = useMemo(
+    () => ({
+      hasta: Number(params.get('hasta')) || 650,
+      n: Number(params.get('n')) || 50,
+    }),
+    [params],
+  );
 
   const [mode, setMode] = useState<Mode>(initialMode);
   const blockId = initialBlock;
@@ -62,19 +78,19 @@ export default function Practice() {
 
   const start = useMemo(
     () => () => {
-      setQuestions(pickQuestions(mode, blockId, progress));
+      setQuestions(pickQuestions(mode, blockId, progress, rango));
       setIdx(0);
       setSelected(null);
       setRevealed(false);
       setDone(false);
       setCorrectCount(0);
     },
-    [mode, blockId, progress],
+    [mode, blockId, progress, rango],
   );
 
   // Initial pick
   useEffect(() => {
-    setQuestions(pickQuestions(mode, blockId, progress));
+    setQuestions(pickQuestions(mode, blockId, progress, rango));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
