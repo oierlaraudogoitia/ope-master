@@ -167,28 +167,37 @@ export default function WeekendChallengePopup({ onClose }: Props) {
             </p>
           </div>
 
-          <div className="mt-3">
-            <label className="text-[11px] uppercase tracking-[0.12em] text-stone-400">Desde</label>
+          <div
+            className="dual-range mt-4"
+            style={{
+              ['--fill-left' as string]: `${((desde - 1) / (TOTAL_QUESTIONS - 1)) * 100}%`,
+              ['--fill-right' as string]: `${((hasta - 1) / (TOTAL_QUESTIONS - 1)) * 100}%`,
+            }}
+          >
+            <div className="dual-track" />
+            <div
+              className="dual-fill"
+              style={{ left: 'var(--fill-left)', right: `calc(100% - var(--fill-right))` }}
+            />
             <input
               type="range"
+              aria-label="Desde"
               min={1}
               max={TOTAL_QUESTIONS}
               step={10}
               value={desde}
               onChange={(e) => setDesdeClamped(Number(e.target.value))}
-              className="mt-1 w-full accent-stone-900"
+              style={{ zIndex: desde > TOTAL_QUESTIONS - 50 ? 4 : 3 }}
             />
-          </div>
-          <div className="mt-3">
-            <label className="text-[11px] uppercase tracking-[0.12em] text-stone-400">Hasta</label>
             <input
               type="range"
+              aria-label="Hasta"
               min={1}
               max={TOTAL_QUESTIONS}
               step={10}
               value={hasta}
               onChange={(e) => setHastaClamped(Number(e.target.value))}
-              className="mt-1 w-full accent-stone-900"
+              style={{ zIndex: 3 }}
             />
           </div>
 
