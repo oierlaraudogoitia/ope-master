@@ -8,12 +8,21 @@ interface Props {
 
 const TOTAL_QUESTIONS = 650;
 const COUNT_OPTIONS = [10, 20, 50, 100];
-const CAP_PRESETS = [50, 100, 200, 300, 450, 650];
+const RANGE_PRESETS: { label: string; desde: number; hasta: number }[] = [
+  { label: 'Común (1–200)', desde: 1, hasta: 200 },
+  { label: 'Técnico (201–650)', desde: 201, hasta: 650 },
+  { label: 'Todo (1–650)', desde: 1, hasta: 650 },
+];
 const STORAGE_KEY = 'range-test-prefs';
 
 interface Prefs {
-  cap: number;
+  desde: number;
+  hasta: number;
   count: number;
+}
+
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, n));
 }
 
 function loadPrefs(): Prefs {
@@ -21,9 +30,19 @@ function loadPrefs(): Prefs {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const p = JSON.parse(raw);
+      // New shape
+      if (typeof p.desde === 'number' && typeof p.hasta === 'number' && typeof p.count === 'number') {
+        return {
+          desde: clamp(p.desde, 1, TOTAL_QUESTIONS),
+          hasta: clamp(p.hasta, 1, TOTAL_QUESTIONS),
+          count: COUNT_OPTIONS.includes(p.count) ? p.count : 50,
+        };
+      }
+      // Old shape { cap, count }
       if (typeof p.cap === 'number' && typeof p.count === 'number') {
         return {
-          cap: Math.min(TOTAL_QUESTIONS, Math.max(10, p.cap)),
+          desde: 1,
+          hasta: clamp(p.cap, 1, TOTAL_QUESTIONS),
           count: COUNT_OPTIONS.includes(p.count) ? p.count : 50,
         };
       }
@@ -31,14 +50,15 @@ function loadPrefs(): Prefs {
   } catch {
     // ignore parse errors
   }
-  return { cap: 200, count: 50 };
+  return { desde: 1, hasta: 200, count: 50 };
 }
 
 export default function WeekendChallengePopup({ onClose }: Props) {
   const navigate = useNavigate();
   const initial = loadPrefs();
   const [count, setCount] = useState<number>(initial.count);
-  const [cap, setCap] = useState<number>(initial.cap);
+  const [desde, setDesde] = useState<number>(initial.desde);
+  const [hasta, setHasta] = useState<number>(initial.hasta);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -53,17 +73,30 @@ export default function WeekendChallengePopup({ onClose }: Props) {
     };
   }, [onClose]);
 
-  const effectiveCap = Math.max(cap, count);
+  const setDesdeClamped = (v: number) => {
+    const c = clamp(v, 1, TOTAL_QUESTIONS);
+    setDesde(c);
+    if (c > hasta) setHasta(c);
+  };
+  const setHastaClamped = (v: number) => {
+    const c = clamp(v, 1, TOTAL_QUESTIONS);
+    setHasta(c);
+    if (c < desde) setDesde(c);
+  };
+  const applyPreset = (d: number, h: number) => {
+    setDesde(d);
+    setHasta(h);
+  };
 
   const start = () => {
-    const prefs: Prefs = { cap: effectiveCap, count };
+    const prefs: Prefs = { desde, hasta, count };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
     } catch {
       // ignore quota errors
     }
     onClose();
-    navigate(`/practica?modo=rango&hasta=${effectiveCap}&n=${count}`);
+    navigate(`/practica?modo=rango&desde=${desde}&hasta=${hasta}&n=${count}`);
   };
 
   return (
@@ -75,7 +108,7 @@ export default function WeekendChallengePopup({ onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-screen-sm bg-stone-50 rounded-t-3xl sm:rounded-3xl px-7 pt-7 pb-[calc(2.5rem+env(safe-area-inset-bottom))] shadow-2xl ring-1 ring-stone-900/5 animate-popup-in"
+        className="relative w-full max-w-screen-sm bg-stone-50 rounded-t-3xl sm:rounded-3xl px-7 pt-7 pb-[calc(2.5rem+env(safe-area-inset-bottom))] shadow-2xl ring-1 ring-stone-900/5 animate-popup-in max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="h-1 w-10 rounded-full bg-stone-300 mx-auto -mt-1 mb-4 sm:hidden" />
@@ -95,7 +128,7 @@ export default function WeekendChallengePopup({ onClose }: Props) {
           id="range-test-title"
           className="font-serif text-3xl mt-3 leading-tight text-stone-900"
         >
-          Elige <em className="italic font-normal">cuántas</em> y hasta dónde
+          Elige <em className="italic font-normal">cuántas</em> y el tramo
         </h2>
 
         {/* Cantidad */}
@@ -122,31 +155,50 @@ export default function WeekendChallengePopup({ onClose }: Props) {
           </div>
         </div>
 
-        {/* Rango */}
+        {/* Tramo (desde – hasta) */}
         <div className="mt-7">
           <div className="flex items-baseline justify-between">
-            <p className="text-xs uppercase tracking-[0.15em] text-stone-500">Hasta la pregunta</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-stone-500">Tramo</p>
             <p className="text-sm text-stone-400 tabular">
-              <span className="font-serif italic text-2xl text-stone-900 mr-1">{effectiveCap}</span>
-              / {TOTAL_QUESTIONS}
+              <span className="font-serif italic text-2xl text-stone-900 mr-1">{desde}</span>
+              <span className="text-stone-300">→</span>
+              <span className="font-serif italic text-2xl text-stone-900 mx-1">{hasta}</span>
+              <span className="text-stone-400">/ {TOTAL_QUESTIONS}</span>
             </p>
           </div>
-          <input
-            type="range"
-            min={10}
-            max={TOTAL_QUESTIONS}
-            step={10}
-            value={effectiveCap}
-            onChange={(e) => setCap(Number(e.target.value))}
-            className="mt-3 w-full accent-stone-900"
-          />
+
+          <div className="mt-3">
+            <label className="text-[11px] uppercase tracking-[0.12em] text-stone-400">Desde</label>
+            <input
+              type="range"
+              min={1}
+              max={TOTAL_QUESTIONS}
+              step={10}
+              value={desde}
+              onChange={(e) => setDesdeClamped(Number(e.target.value))}
+              className="mt-1 w-full accent-stone-900"
+            />
+          </div>
+          <div className="mt-3">
+            <label className="text-[11px] uppercase tracking-[0.12em] text-stone-400">Hasta</label>
+            <input
+              type="range"
+              min={1}
+              max={TOTAL_QUESTIONS}
+              step={10}
+              value={hasta}
+              onChange={(e) => setHastaClamped(Number(e.target.value))}
+              className="mt-1 w-full accent-stone-900"
+            />
+          </div>
+
           <div className="mt-3 flex flex-wrap gap-2">
-            {CAP_PRESETS.map((p) => {
-              const active = effectiveCap === p;
+            {RANGE_PRESETS.map((p) => {
+              const active = desde === p.desde && hasta === p.hasta;
               return (
                 <button
-                  key={p}
-                  onClick={() => setCap(p)}
+                  key={p.label}
+                  onClick={() => applyPreset(p.desde, p.hasta)}
                   className={
                     'rounded-full px-3.5 py-1.5 text-sm transition-colors ' +
                     (active
@@ -154,7 +206,7 @@ export default function WeekendChallengePopup({ onClose }: Props) {
                       : 'bg-stone-100 text-stone-700 hover:bg-stone-200')
                   }
                 >
-                  {p}
+                  {p.label}
                 </button>
               );
             })}
